@@ -1,5 +1,7 @@
 package com.tobrun.datacompat
 
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.isPrivate
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
@@ -45,6 +47,18 @@ class DataCompatProcessor(
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         logger.info("DataCompat: process")
+        val symbolsWithDefaultAnnotation =
+            resolver.getSymbolsWithAnnotation(Default::class.qualifiedName!!, true)
+        symbolsWithDefaultAnnotation.forEach {
+            logger.error("Default annotation symbol $it (with parent ${it.parent}: ${it.annotations.toList()}")
+            logger.error("parent: ${it.parent!!.javaClass}")
+            logger.error("parent parent: ${it.parent!!.parent!!.javaClass}")
+            it.annotations.forEach {
+
+            logger.error("Default annotation found with arguments ${it.arguments.toList()}")
+
+            }
+        }
         val annotated = resolver.getSymbolsWithAnnotation(DataCompat::class.qualifiedName!!, true)
         if (annotated.count() == 0) {
             logger.info("DataCompat: No DataCompat annotations found for processing")
@@ -59,6 +73,7 @@ class DataCompatProcessor(
 
     private inner class Visitor : KSVisitorVoid() {
 
+        @OptIn(KspExperimental::class)
         @Suppress("LongMethod", "MaxLineLength", "ComplexMethod")
         override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
             if (isInvalidAnnotatedSetup(classDeclaration)) {
@@ -84,6 +99,7 @@ class DataCompatProcessor(
             for (property in classDeclaration.getAllProperties()) {
                 val classTypeParams = classDeclaration.typeParameters.toTypeParameterResolver()
                 val typeName = property.type.resolve().toTypeName(classTypeParams)
+                logger.error("Does typename have annotation: ${property.type.isAnnotationPresent(Default::class)}")
                 propertyMap[property] = typeName
             }
 
@@ -220,7 +236,13 @@ class DataCompatProcessor(
             val builderBuilder = TypeSpec.classBuilder("Builder")
             for (property in propertyMap) {
                 val propertyName = property.key.toString()
-                val defaultAnnotationsParams = property.key.annotations
+                val annotations = property.key.annotations
+                logger.error("Annotations ${annotations.count()}")
+                annotations.forEach {
+
+                logger.error("Found annotation $it")
+                }
+                val defaultAnnotationsParams = annotations
                     .firstOrNull { it.annotationType.resolve().toString() == Default::class.simpleName }
                     ?.arguments
                 val defaultValue = defaultAnnotationsParams?.first()

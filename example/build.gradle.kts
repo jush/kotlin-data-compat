@@ -3,6 +3,11 @@ plugins {
     kotlin("jvm")
 }
 
+
+kotlin{
+    jvmToolchain(11)
+}
+
 repositories {
     mavenCentral()
     google()

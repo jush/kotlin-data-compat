@@ -21,3 +21,14 @@ private data class PersonData(
     @Default("42")
     val age: Int
 ) : SampleInterface
+
+
+@DataCompat
+@SampleAnnotation
+private data class PersonData2(
+    @Default("\"Josdfhn\" + Dateasdfa(1580897313933L).toString()", imports = ["java.util.Date"])
+    val name: String,
+    val nickname: String?,
+    @Default("4fsdf2")
+    val age: Int
+) : SampleInterface
